@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Truth or Dare — Flirty · Spicy · Hot</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f5f2;
+      --surface: #ffffff;
+      --surface-dim: #f0ede8;
+      --border: rgba(0,0,0,0.10);
+      --border-strong: rgba(0,0,0,0.18);
+      --text-primary: #1a1916;
+      --text-secondary: #5a5855;
+      --text-muted: #9a9895;
+      --radius: 8px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16140f;
+        --surface: #24211a;
+        --surface-dim: #1d1b14;
+        --border: rgba(255,255,255,0.10);
+        --border-strong: rgba(255,255,255,0.18);
+        --text-primary: #f0ede8;
+        --text-secondary: #9a9895;
+        --text-muted: #5a5855;
+      }
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--text-primary);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 4rem;
+      gap: 0;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    header p {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .heat-selector, .type-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .heat-btn {
+      padding: 9px 20px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border-strong);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: var(--font);
+    }
+    .heat-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+    .heat-btn.active-flirty { background: #fbeaf0; color: #993556; border-color: #ed93b1; }
+    .heat-btn.active-spicy  { background: #faeeda; color: #854f0b; border-color: #ef9f27; }
+    .heat-btn.active-hot    { background: #fcebeb; color: #a32d2d; border-color: #f09595; }
+
+    @media (prefers-color-scheme: dark) {
+      .heat-btn.active-flirty { background: #3a1525; color: #ed93b1; border-color: #72243e; }
+      .heat-btn.active-spicy  { background: #2e1e04; color: #fac775; border-color: #854f0b; }
+      .heat-btn.active-hot    { background: #2e0e0e; color: #f09595; border-color: #a32d2d; }
+    }
+
+    .type-btn {
+      padding: 7px 22px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-strong);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+      font-family: var(--font);
+    }
+    .type-btn:hover { background: var(--surface-dim); color: var(--text-primary); }
+    .type-btn.active-truth  { background: #e6f1fb; color: #185fa5; border-color: #85b7eb; }
+    .type-btn.active-dare   { background: #eaf3de; color: #3b6d11; border-color: #97c459; }
+    .type-btn.active-random { background: #eeedfe; color: #534ab7; border-color: #afa9ec; }
+
+    @media (prefers-color-scheme: dark) {
+      .type-btn.active-truth  { background: #042c53; color: #85b7eb; border-color: #185fa5; }
+      .type-btn.active-dare   { background: #173404; color: #97c459; border-color: #3b6d11; }
+      .type-btn.active-random { background: #26215c; color: #afa9ec; border-color: #534ab7; }
+    }
+
+    .card-area {
+      width: min(320px, 90vw);
+      height: 220px;
+      position: relative;
+      cursor: pointer;
+      perspective: 900px;
+      margin-bottom: 1rem;
+    }
+
+    .deck-shadow {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      background: var(--surface-dim);
+      border: 1px solid var(--border);
+    }
+    .deck-shadow-1 { top: 6px; left: 6px; z-index: 0; }
+    .deck-shadow-2 { top: 12px; left: 12px; z-index: -1; }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      z-index: 1;
+      border-radius: 16px;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1.5px solid var(--border);
+    }
+
+    .card-back {
+      background: var(--surface);
+    }
+    .card-back-icon { font-size: 44px; margin-bottom: 10px; }
+    .card-back-label { font-size: 14px; color: var(--text-muted); }
+
+    .card-front { transform: rotateY(180deg); }
+    .card-front.flirty { background: #fbeaf0; border-color: #ed93b1; }
+    .card-front.spicy  { background: #faeeda; border-color: #ef9f27; }
+    .card-front.hot    { background: #fcebeb; border-color: #f09595; }
+
+    @media (prefers-color-scheme: dark) {
+      .card-front.flirty { background: #3a1525; border-color: #72243e; }
+      .card-front.spicy  { background: #2e1e04; border-color: #854f0b; }
+      .card-front.hot    { background: #2e0e0e; border-color: #a32d2d; }
+    }
+
+    .card-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    .tag-flirty-truth { background: #f4c0d1; color: #72243e; }
+    .tag-flirty-dare  { background: #c0dd97; color: #27500a; }
+    .tag-spicy-truth  { background: #fac775; color: #633806; }
+    .tag-spicy-dare   { background: #c0dd97; color: #27500a; }
+    .tag-hot-truth    { background: #f7c1c1; color: #791f1f; }
+    .tag-hot-dare     { background: #c0dd97; color: #27500a; }
+
+    @media (prefers-color-scheme: dark) {
+      .tag-flirty-truth { background: #72243e; color: #f4c0d1; }
+      .tag-flirty-dare  { background: #27500a; color: #c0dd97; }
+      .tag-spicy-truth  { background: #633806; color: #fac775; }
+      .tag-spicy-dare   { background: #27500a; color: #c0dd97; }
+      .tag-hot-truth    { background: #791f1f; color: #f7c1c1; }
+      .tag-hot-dare     { background: #27500a; color: #c0dd97; }
+    }
+
+    .card-text {
+      font-size: 15.5px;
+      line-height: 1.55;
+      font-weight: 400;
+    }
+    .card-text.flirty { color: #72243e; }
+    .card-text.spicy  { color: #633806; }
+    .card-text.hot    { color: #791f1f; }
+
+    @media (prefers-color-scheme: dark) {
+      .card-text.flirty { color: #f4c0d1; }
+      .card-text.spicy  { color: #fac775; }
+      .card-text.hot    { color: #f7c1c1; }
+    }
+
+    .tap-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      height: 16px;
+      transition: opacity 0.2s;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .action-btn {
+      padding: 10px 24px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: var(--font);
+    }
+    .action-btn:hover { background: var(--surface-dim); }
+    .action-btn:active { transform: scale(0.97); }
+
+    .counter {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    footer {
+      margin-top: 3rem;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Truth or Dare 💋🌶️🔥</h1>
+    <p>Pick your heat level and draw a card</p>
+  </header>
+
+  <div class="controls">
+    <div class="heat-selector">
+      <button class="heat-btn active-flirty" onclick="setHeat('flirty', this)">💋 Flirty</button>
+      <button class="heat-btn" onclick="setHeat('spicy', this)">🌶️ Spicy</button>
+      <button class="heat-btn" onclick="setHeat('hot', this)">🔥 Hot</button>
+    </div>
+    <div class="type-selector">
+      <button class="type-btn active-truth" onclick="setType('truth', this)">Truth</button>
+      <button class="type-btn" onclick="setType('dare', this)">Dare</button>
+      <button class="type-btn" onclick="setType('random', this)">Random</button>
+    </div>
+  </div>
+
+  <div class="card-area" onclick="flipCard()">
+    <div class="deck-shadow deck-shadow-2"></div>
+    <div class="deck-shadow deck-shadow-1"></div>
+    <div class="card" id="card">
+      <div class="card-face card-back">
+        <div class="card-back-icon" id="back-icon">💋</div>
+        <div class="card-back-label">Tap to draw a card</div>
+      </div>
+      <div class="card-face card-front" id="card-front">
+        <div class="card-tag" id="card-tag"></div>
+        <div class="card-text" id="card-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tap-hint" id="tap-hint">Tap the card to reveal</div>
+
+  <div class="action-row">
+    <button class="action-btn" onclick="nextCard()">Next card ↓</button>
+  </div>
+
+  <div class="counter" id="counter">0 cards drawn</div>
+
+  <footer>18+ only · play responsibly · all participants must consent</footer>
+
+  <script>
+    const cards = {
+      flirty: {
+        truth: [
+          "What's the first thing you noticed about me?",
+          "What's your favorite compliment to receive?",
+          "Have you ever had a crush on someone in this room?",
+          "What's the most romantic thing someone has done for you?",
+          "What's your go-to move when you're flirting with someone?",
+          "Do you believe in love at first sight?",
+          "What's one thing you find instantly attractive in a person?",
+          "Have you ever written a love letter?",
+          "What's your ideal first date?",
+          "What's the most embarrassing thing you've done to get someone's attention?",
+          "What's your love language?",
+          "Have you ever liked someone who didn't know?",
+        ],
+        dare: [
+          "Give someone in the room a genuine compliment — make them blush.",
+          "Wink at someone without breaking eye contact for 5 seconds.",
+          "Text your crush something flirty right now.",
+          "Do your best pickup line on the person to your left.",
+          "Hold someone's hand for 30 seconds.",
+          "Tell someone why you find them attractive.",
+          "Serenade someone with 10 seconds of a love song.",
+          "Give the person across from you a long, meaningful look.",
+          "Write your number on someone's hand.",
+          "Ask someone for a slow dance — right here, right now.",
+        ]
+      },
+      spicy: {
+        truth: [
+          "What's the most risqué place you've ever made out with someone?",
+          "What's your biggest turn-on that you've never told anyone?",
+          "Have you ever sent a spicy text you immediately regretted?",
+          "What's the boldest thing you've ever done to seduce someone?",
+          "Have you ever had a friends-with-benefits situation?",
+          "What's the most scandalous secret you're keeping?",
+          "Have you ever kissed more than one person in the same night?",
+          "What's something you want in a relationship that you're embarrassed to admit?",
+          "What's the most spontaneous romantic thing you've ever done?",
+          "Have you ever fallen for someone you absolutely shouldn't have?",
+          "What's one fantasy you'd actually act on if you could?",
+          "What's the naughtiest thought you've had about someone in this room?",
+        ],
+        dare: [
+          "Give a 60-second massage to the person of your choice.",
+          "Bite your lip seductively at someone and hold it for 5 seconds.",
+          "Whisper something you find attractive about someone in their ear.",
+          "Do a body roll — full commitment.",
+          "Let someone feed you something using only their hands.",
+          "Recreate a movie kiss with a willing participant.",
+          "Send a spicy voice note to someone in your contacts.",
+          "Sit in someone's lap for the next round.",
+          "Let someone draw on your skin with a marker.",
+          "Do your most convincing 'come hither' look on command.",
+        ]
+      },
+      hot: {
+        truth: [
+          "What's your absolute wildest fantasy you've never acted on?",
+          "What's the most adventurous thing you've ever done with a partner?",
+          "What's something you secretly want to try but have been too shy to ask for?",
+          "Have you ever role-played? What was the scenario?",
+          "What's the longest you've ever gone without and how did you cope?",
+          "What's something a partner did that completely blew your mind?",
+          "What body part do you find most irresistible?",
+          "Have you ever done something in public that could've gotten you in trouble?",
+          "What's your record for the number of times in one night?",
+          "Describe your perfect night in explicit detail — you decide how explicit.",
+          "What's a boundary you've pushed that surprised even yourself?",
+          "What's the most daring place you've ever hooked up?",
+        ],
+        dare: [
+          "Give a lap dance to whoever the group picks.",
+          "Let the group pick two people to do a 10-second make-out session.",
+          "Describe your biggest turn-on in as much graphic detail as you dare.",
+          "Let someone blindfold you and describe what they'd do with 10 minutes alone with you.",
+          "Send the spiciest photo from your camera roll — but you decide who sees it.",
+          "Let one person trace their finger from your shoulder to your wrist — slowly.",
+          "Act out your favorite scene from a spicy movie with a partner.",
+          "Describe what you would do if you had 1 hour alone with the most attractive person here.",
+          "Let someone take a photo of you in the most seductive pose you can manage.",
+          "Play 2 minutes of 'forbidden questions' — the group asks, you must answer honestly.",
+        ]
+      }
+    };
+
+    const heatIcons  = { flirty: '💋', spicy: '🌶️', hot: '🔥' };
+    const heatLabels = { flirty: 'Flirty', spicy: 'Spicy', hot: 'Hot' };
+
+    let currentHeat = 'flirty';
+    let currentType = 'truth';
+    let isFlipped    = false;
+    let drawnCount   = 0;
+    let usedCards    = {
+      flirty: { truth: [], dare: [] },
+      spicy:  { truth: [], dare: [] },
+      hot:    { truth: [], dare: [] }
+    };
+
+    function setHeat(heat, btn) {
+      currentHeat = heat;
+      document.querySelectorAll('.heat-btn').forEach(b => b.className = 'heat-btn');
+      btn.classList.add('active-' + heat);
+      document.getElementById('back-icon').textContent = heatIcons[heat];
+      if (isFlipped) resetCard();
+    }
+
+    function setType(type, btn) {
+      currentType = type;
+      document.querySelectorAll('.type-btn').forEach(b => b.className = 'type-btn');
+      btn.classList.add('active-' + type);
+      if (isFlipped) resetCard();
+    }
+
+    function getRandomCard() {
+      const resolvedType = currentType === 'random'
+        ? (Math.random() < 0.5 ? 'truth' : 'dare')
+        : currentType;
+
+      const pool = cards[currentHeat][resolvedType];
+      let used = usedCards[currentHeat][resolvedType];
+
+      if (used.length >= pool.length) {
+        usedCards[currentHeat][resolvedType] = [];
+        used = [];
+      }
+
+      const available = pool.map((_, i) => i).filter(i => !used.includes(i));
+      const idx = available[Math.floor(Math.random() * available.length)];
+      usedCards[currentHeat][resolvedType].push(idx);
+
+      return { text: pool[idx], type: resolvedType };
+    }
+
+    function flipCard() {
+      if (isFlipped) { nextCard(); return; }
+
+      const drawn = getRandomCard();
+      const heat  = currentHeat;
+      const type  = drawn.type;
+
+      const front = document.getElementById('card-front');
+      const tag   = document.getElementById('card-tag');
+      const text  = document.getElementById('card-text');
+
+      front.className = 'card-face card-front ' + heat;
+      tag.className   = 'card-tag tag-' + heat + '-' + type;
+      tag.textContent = (type === 'truth' ? '🔍 Truth' : '⚡ Dare') + ' · ' + heatLabels[heat];
+      text.className  = 'card-text ' + heat;
+      text.textContent = drawn.text;
+
+      document.getElementById('card').classList.add('flipped');
+      document.getElementById('tap-hint').textContent = 'Tap again for next card';
+      isFlipped = true;
+      drawnCount++;
+      document.getElementById('counter').textContent =
+        drawnCount + ' card' + (drawnCount !== 1 ? 's' : '') + ' drawn';
+    }
+
+    function resetCard() {
+      document.getElementById('card').classList.remove('flipped');
+      isFlipped = false;
+      document.getElementById('tap-hint').textContent = 'Tap the card to reveal';
+    }
+
+    function nextCard() {
+      if (!isFlipped) { flipCard(); return; }
+      const card = document.getElementById('card');
+      card.classList.remove('flipped');
+      setTimeout(() => { isFlipped = false; flipCard(); }, 300);
+    }
+  </script>
+
+</body>
+</html>
